@@ -2,46 +2,7 @@ import pygame
 import numpy as np
 from abc import *
 
-pygame.init()
-screen_size = np.array((1366,768))
-pygame.display.set_mode(screen_size)
-pygame.display.set_caption("Simulation Screen")
-
-class Box(metaclasss = ABCMeta):
-
-    def __init__(self,pos:list,size:list):
-        self.pos = np.array(pos)
-        self.size = np.array(size)
-
-        self.SubBoxes = []
-
-    @abstractmethod
-    def draw(self,pos = None):
-        if pos is None:
-            pos == self.pos
-        pass
-    
-    def drawALL(self,pos = None):
-        if pos is None:
-            pos == self.pos
-        self.draw(pos)
-        SubBox:Box
-        for SubBox in self.SubBoxes:
-            SubBox.drawALL(pos + SubBox.pos)
-
-class boardBox(Box):
-
-    def __init__(self,pos:list,size:list):
-        global board_scale
-        super().__init__(pos,size)
-
-class sectionBox(Box):
-
-    def __init__(self,coordinate:list,board_size:np.ndarray):
-        size = board_size/board_scale
-        pos = np.array([[coordinate[0],0],[0,coordinate[1]]]) @ size
-        super().__init__(pos,size)
-
+import sprites
         
 def strategy1():
     pass
