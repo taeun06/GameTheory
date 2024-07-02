@@ -18,8 +18,12 @@ DEFAULT_FONT  = pg.font.SysFont('nanumsquareregular',20,False,False)
 DEFAULT_COLOR = BLACK
 BG_COLOR      = WHITE
 ANTIALIAS     = True
+SHOW_FPS      = True
 
 sprite_list = []
+Board = None
+Title = None
+fpsBox = None
 
 class Box():
 
@@ -33,8 +37,7 @@ class Box():
     def add_Box(self,box):
         self.SubBox_list.append(box)
 
-    def draw(self,parentpos = [0,0]):
-        
+    def draw(self):
         pg.draw.rect(screen,self.color,self.rect,self.width)
         flattened = np.array(self.SubBox_list).flatten()
         for SubBox in flattened:
@@ -42,13 +45,19 @@ class Box():
     
 class TextBox():
 
-    def __init__(self,center,text,font = DEFAULT_FONT,color = DEFAULT_COLOR):
+    def __init__(self ,text ,font = DEFAULT_FONT ,color = DEFAULT_COLOR ,center = None
+                ,topleft = None ,topright = None ,bottomleft = None ,bottomright = None):
         self.text  = text
         self.font  = font
         self.color = color
         self.image = self.font.render(self.text,ANTIALIAS,self.color)
         self.rect  = self.image.get_rect()
-        self.rect.center = center
+        if   center      is not None: self.rect.center      = center
+        elif topleft     is not None: self.rect.topleft     = topleft
+        elif topright    is not None: self.rect.topright    = topright
+        elif bottomleft  is not None: self.rect.bottomleft  = bottomleft
+        elif bottomright is not None: self.rect.bottomright = bottomright
+        else: raise ValueError("no position information given in TextBox object")
     
     def draw(self):
         screen.blit(self.image,self.rect.topleft)
@@ -71,7 +80,24 @@ class Button():
     def is_clicked(self,pos:list):
         return self.rect.collidepoint(pos)
 
+def flip_screen():
+    screen.fill(WHITE)
+    for sprite in sprite_list:
+        sprite.draw()
+    pg.display.update()
+
+def update_screen(fps):
+    global Board, Title, fpsBox
+    if Board is None:
+        print(Board)
+        raise ValueError("Board is not initialized.")
+    if SHOW_FPS is True:
+        sprite_list.remove(fpsBox)
+        fpsBox = TextBox(f"FPS:{int(fps)}",topleft=[0,0])
+        sprite_list.append(fpsBox)
+
 def init(board_size:int,board_scale):
+    global Board, Title, fpsBox
     Board = Box([0,0,board_size,board_size])
     Board.rect.center = screen_size/2
     sprite_list.append(Board)
@@ -85,18 +111,9 @@ def init(board_size:int,board_scale):
             line.append(section)
         Board.SubBox_list.append(line)
     
-    Title = TextBox([screen_size[0]/2,20],"시뮬레이션 화면")
+    Title = TextBox("시뮬레이션 화면",center = [screen_size[0]/2,20])
     sprite_list.append(Title)
 
-    running = True
-    while running:
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                running = False
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    running = False
-        screen.fill(WHITE)
-        for sprite in sprite_list:
-            sprite.draw()
-        pg.display.update()
+    if SHOW_FPS is True:
+        fpsBox = TextBox("FPS:",topleft = [0,0])
+        sprite_list.append(fpsBox)

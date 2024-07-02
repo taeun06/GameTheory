@@ -1,4 +1,4 @@
-import pygame
+import pygame as pg
 import numpy as np
 from abc import *
 import sprites as spr
@@ -65,3 +65,21 @@ def generate_board():
     np.random.shuffle(players)
     players.reshape((board_scale,board_scale))
     board = players.tolist()
+
+########################### main event loop #################################
+
+clock = pg.time.Clock()
+
+running = True
+while running:
+
+    tick = clock.tick(60)
+
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            running = False
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_ESCAPE:
+                running = False
+    spr.update_screen(clock.get_fps())
+    spr.flip_screen()
