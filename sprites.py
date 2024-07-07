@@ -9,8 +9,8 @@ GREEN = (  0,255,  0)
 BLUE  = (  0,  0,255)
 
 pg.init()
-screen_size = np.array((1366,768))
-screen = pg.display.set_mode(screen_size)
+SCREEN_SIZE = np.array((1366,768))
+screen = pg.display.set_mode(SCREEN_SIZE)
 pg.display.set_caption("Simulation Screen")
 
 DEFAULT_FONT  = pg.font.SysFont('nanumsquareregular',20,False,False)

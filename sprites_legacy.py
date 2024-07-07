@@ -96,7 +96,7 @@ fpsBox = None
         fpsBox = TextBox(f"FPS:{int(fps)}",topleft=[0,0])
         sprite_list.append(fpsBox) """
 
-def init(board_size:int,board_scale):
+def init(board_size:int,board_scale):     #삭제 예정. 나중에 메인 이벤트 루프에 풀어서 넣을 계획
     global Board, Title, fpsBox
     Board = Box([0,0,board_size,board_size])
     Board.rect.center = screen_size/2
