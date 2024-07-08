@@ -2,26 +2,30 @@ import pygame as pg
 import numpy as np
 from abc import *
 import sprites as spr
-        
+import random
+
 def strategy1():
-    pass
+    return True
 
 def strategy2():
-    pass
+    return False
 
 def strategy3():
-    pass
+    for 
 
 def strategy4():
-    pass
+    global board
 
 BOARD_RECT = pg.Rect(0,0,0,0)
 BOARD_RECT.size = (700,700)
 BOARD_RECT.center = spr.SCREEN_SIZE/2
 
 BOARD_SCALE = 10
-START_SCORE = 100                                       #플레이어의 시작 돈 
-START_ENV = 0                                           #보드 한 칸의 시작 환경 점수
+START_SCORE = 100                                #플레이어의 시작 돈 
+START_ENV = -10                              #보드 한 칸의 시작 환경 점수
+RESTORESCORE = 10
+DESTROYSCORE = -10
+REGENERATION = 5
 nature = [[0]*BOARD_SCALE]*BOARD_SCALE                  #각 플레이어들의 거주지의 환경 점수 - 삭제 예정
 
 STRATEGIES = [strategy1,strategy2,strategy3,strategy4]  #각 전략들의 함수를 이 list 자료에 저장하기
@@ -63,12 +67,25 @@ class Player():
     
     def choose_turn(self):
         self.turn = self.strategy()
+        
 
     def make_turn(self):
-        if self.turn == True:                     #True는 환경 회복, False는 환경 파괴
-            pass                    
+        if self.turn == True:        #True는 환경 회복, False는 환경 파괴
+            START_SCORE -= 10
+            for i in range(BOARD_SCALE):
+                for k in range(BOARD_SCALE):
+                    distance = np.sqrt((i-self.coordinate[0])**2 + (k-self.coordinate[1])**2)
+                    START_ENV += RESTORESCORE / distance
+                    
         else:
-            pass
+            START_SCORE += 10
+            for i in range(BOARD_SCALE):
+                for k in range(BOARD_SCALE):
+                    DISTANCE = np.sqrt((i-self.coordinate[0])**2 + (k-self.coordinate[1])**2)
+                    START_ENV -= DESTROYSCORE / distance
+ 
+
+    
 
     def reset(self ,new_strategy):
         self.score = START_SCORE
