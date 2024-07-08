@@ -1,20 +1,25 @@
 import pygame as pg
 import numpy as np
-from abc import *
 import sprites as spr
+from math import *
 import random
 
-def strategy1():
+def always_recover(self):
     return True
 
-def strategy2():
+def always_destroy(self):
     return False
 
-def strategy3():
-    for 
+def strategy3(self):
+    return True #임시
 
-def strategy4():
-    global board
+def strategy4(self):
+    return True #임시
+
+def get_dist(v1:list ,v2:list) -> float:
+    v1:np.ndarray = np.array(v1)
+    v2:np.ndarray = np.array(v2)
+    return np.sqrt(v1 @ v2)
 
 BOARD_RECT = pg.Rect(0,0,0,0)
 BOARD_RECT.size = (700,700)
@@ -23,14 +28,16 @@ BOARD_RECT.center = spr.SCREEN_SIZE/2
 BOARD_SCALE = 10
 START_SCORE = 100                                #플레이어의 시작 돈 
 START_ENV = -10                              #보드 한 칸의 시작 환경 점수
-RESTORESCORE = 10
-DESTROYSCORE = -10
-REGENERATION = 5
-nature = [[0]*BOARD_SCALE]*BOARD_SCALE                  #각 플레이어들의 거주지의 환경 점수 - 삭제 예정
 
-STRATEGIES = [strategy1,strategy2,strategy3,strategy4]  #각 전략들의 함수를 이 list 자료에 저장하기
+RESTORE_SCORE = 10
+DESTROY_SCORE = -10
+REGENERATION = 5
+
+DESTROY_SPREAD = 1
+RESTORE_SPREAD = 1
+
+STRATEGIES = [always_recover,always_destroy,strategy3,strategy4]  #각 전략들의 함수를 이 list 자료에 저장하기
 STRATEGY_NUM = [25,25,25,25]                            #각 전략을 가진 플레이어들의 수를 저장
-board = []
 
 ################################################################  sprite definition  ################################################################
 
@@ -46,8 +53,7 @@ class Player():
     #    1.현재 보드에 있는 다른 플레이어들의 행동을 파악하며 다음 턴을 정하는 함수 - choose_turn(self)
     #    2.위의 함수의 결과를 기반으로 다음 행동을 실행하는 함수 - make_turn(self)
     #    3.점수가 하위권일 시 탈락하면 속성들을 리셋하고 전략을 바꾼 뒤 속성들을 초기화하는 함수 - reset(self)
-    #    4.spr_group의 스프라이트들의 내용을 재로딩하는 함수 - render_sprites(self)
-    #    5.spr_group의 스프라이트들을 출력하는 함수 - draw(self)
+    #    4.spr_group의 스프라이트들을 출력하는 함수 - draw(self)
     def __init__(self ,coordinate:tuple ,strategy ,parent_board):
         self.score = START_SCORE
         self.environment = START_ENV
@@ -66,34 +72,26 @@ class Player():
         self.spr_group.add(self.section)
     
     def choose_turn(self):
-        self.turn = self.strategy()
+        self.turn = self.strategy(self)
         
 
     def make_turn(self):
         if self.turn == True:        #True는 환경 회복, False는 환경 파괴
-            START_SCORE -= 10
-            for i in range(BOARD_SCALE):
-                for k in range(BOARD_SCALE):
-                    distance = np.sqrt((i-self.coordinate[0])**2 + (k-self.coordinate[1])**2)
-                    START_ENV += RESTORESCORE / distance
+            for line in self.parent_board.players:
+                for player in line:
+                    distance = get_dist(player.coordinate,self.coordinate)
+                    player.environment += RESTORE_SCORE / DESTROY_SPREAD * exp(-((distance/RESTORE_SPREAD)**2))
                     
         else:
-            START_SCORE += 10
-            for i in range(BOARD_SCALE):
-                for k in range(BOARD_SCALE):
-                    DISTANCE = np.sqrt((i-self.coordinate[0])**2 + (k-self.coordinate[1])**2)
-                    START_ENV -= DESTROYSCORE / distance
+            for line in self.parent_board.players:
+                for player in line:
+                    distance = get_dist(player.coordinate,self.coordinate)
+                    player.environment -= DESTROY_SCORE / DESTROY_SPREAD * exp(-((distance/DESTROY_SPREAD)**2))
  
-
-    
-
     def reset(self ,new_strategy):
         self.score = START_SCORE
         self.environment = START_ENV
         self.strategy = new_strategy
-
-    def render_sprites():
-        pass
 
     def draw(self):
         pass
@@ -145,6 +143,13 @@ board = Board(BOARD_RECT)
 
 drawables_list = [title_box,board]
 
+for line in board.players:
+    for player in line:
+        if player.strategy == always_recover: player.section.color = spr.BLACK
+        elif player.strategy == always_destroy: player.section.color = spr.RED
+        elif player.strategy == strategy3: player.section.color = spr.GREEN
+        elif player.strategy == strategy4: player.section.color = spr.BLUE
+
 ################################################################   main event loop   ################################################################
 
 clock = pg.time.Clock()
@@ -160,7 +165,14 @@ while running:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False
-    """여기에 메인 코드가 들어감"""
+
+    for line in board.players:
+        for player in line:
+            player.choose_turn()
+    for line in board.players:
+        for player in line:
+            player.make_turn()
+            
     spr.screen.fill(spr.BG_COLOR)
     for everything in drawables_list:
         everything.update()
