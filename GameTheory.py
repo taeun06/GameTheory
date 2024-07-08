@@ -56,8 +56,8 @@ class Player():
         self.spr_group = pg.sprite.Group()
 
         #스프라이트 1. 보드 위의 사각형을 나타냄
-        section_size = np.array(self.rect.size)/self.parent_board.rect.size
-        section_pos  = np.array([[section_size[0],0],[0,section_size[1]]]) @ self.coordinate
+        section_size = np.array(self.parent_board.rect.size)/BOARD_SCALE
+        section_pos  = np.array([[section_size[0],0],[0,section_size[1]]]) @ self.coordinate + np.array(self.parent_board.rect.topleft)
         self.section = spr.Rectangle(section_size,topleft=section_pos)
         self.spr_group.add(self.section)
     
@@ -99,30 +99,31 @@ class Board():
                              BOARD_SCALE의 제곱:{BOARD_SCALE**2}""")
         for index,strategy in enumerate(STRATEGIES):
             for i in range(STRATEGY_NUM[index]):
-                self.players += [player((0,0),strategy,self)]
+                self.players += [Player((0,0),strategy,self)]
         self.players = np.array(self.players)
         np.random.shuffle(self.players)
-        self.players.reshape((BOARD_SCALE,BOARD_SCALE))
-        self.players = self.players.tolist()
+        self.players = self.players.reshape((BOARD_SCALE,BOARD_SCALE)).tolist()
         for x, line in enumerate(self.players):
-            for y, player in enumerate(self.players):
+            for y, player in enumerate(line):
                 player.coordinate = (x,y)
                 player.load_sprites()
 
     def draw(self):
         player:Player
         for line in self.players:
-            for player in self.players:
-                player.spr_group.draw()
+            for player in line:
+                player.spr_group.draw(spr.screen)
 
-
-
-
+    def update(self):
+        player:Player
+        for line in self.players:
+            for player in line:
+                player.spr_group.update()
         
 ################################################################    initial setup    ################################################################
 
 #필요한 상수들과, 시작 전 보드 세팅과 같은 작업들을 수행함
-title_box = spr.TextBox("시뮬레이션 화면",center = [spr.SCREEN_SIZE[0]/2,70])
+title_box = spr.TextBox("시뮬레이션 화면",center = [spr.SCREEN_SIZE[0]/2,20])
 board = Board(BOARD_RECT)
 
 drawables_list = [title_box,board]
@@ -142,5 +143,9 @@ while running:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False
-    spr.update_screen(clock.get_fps())
+    """여기에 메인 코드가 들어감"""
+    spr.screen.fill(spr.BG_COLOR)
+    for everything in drawables_list:
+        everything.update()
+        everything.draw()
     spr.flip_screen()
