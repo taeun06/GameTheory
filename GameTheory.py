@@ -4,22 +4,26 @@ import sprites as spr
 from math import *
 import random
 
-def always_recover(self):
+def always_recover(self): #R type
     self.turn = True
 
-def always_destroy(self):
+def always_destroy(self): #D type
     self.turn = False
 
-def maintain_score(self):
+def maintain_score(self): #MS type
     if self.score > MAINTAIN_LEVEL_SCO: self.turn = True
     else:                               self.turn = False
 
-def maintain_env(self):
+def maintain_env(self): #ME type
     if self.environment < MAINTAIN_LEVEL_ENV: self.turn = True
     else:                                     self.turn = False
 
-def alter_action(self):
+def alter_action(self): #A type
     self.turn = ~ self.turn
+
+def maintain_proportional(self): #MP type
+    if self.environment * MAINTAIN_LEVEL_RATIO < self.score: self.turn = True
+    else:                                                    self.turn = False
 
 def get_dist(v1:list ,v2:list) -> float:
     v1:np.ndarray = np.array(v1)
@@ -46,6 +50,7 @@ BOARD_RECT.center = spr.SCREEN_SIZE/2
 
 MAINTAIN_LEVEL_SCO = 80
 MAINTAIN_LEVEL_ENV = 1
+MAINTAIN_LEVEL_RATIO = 30
 
 BOARD_SCALE = 20
 START_SCORE = 100
