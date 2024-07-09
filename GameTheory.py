@@ -1,32 +1,69 @@
 import pygame as pg
 import numpy as np
-from abc import *
 import sprites as spr
-        
-def strategy1():
-    pass
+from math import *
+import random
 
-def strategy2():
-    pass
+def always_recover(self):
+    self.turn = True
 
-def strategy3():
-    pass
+def always_destroy(self):
+    self.turn = False
 
-def strategy4():
-    pass
+def maintain_score(self):
+    if self.score > MAINTAIN_LEVEL_SCO: self.turn = True
+    else:                               self.turn = False
+
+def maintain_env(self):
+    if self.environment < MAINTAIN_LEVEL_ENV: self.turn = True
+    else:                                     self.turn = False
+
+def alter_action(self):
+    self.turn = ~ self.turn
+
+def get_dist(v1:list ,v2:list) -> float:
+    v1:np.ndarray = np.array(v1)
+    v2:np.ndarray = np.array(v2)
+    return np.sqrt((v1-v2) @ (v1-v2))
+
+def score_to_color(self):
+    sco = self.score
+    env = self.environment
+
+    if sco <= 0:
+        self.section.color = [255,255,255]
+        return 0
+
+    self.section.color = [255 / exp(sco / START_SCORE),255 / exp(sco / START_SCORE),255 / exp(sco / START_SCORE)]
+    if env > 0: self.section.color[2] += (255 - 255 / exp(sco / START_SCORE)) * tanh(env)
+    else      : self.section.color[0] += (255 - 255 / exp(sco / START_SCORE)) * tanh(-env)
+    for index, value in enumerate(self.section.color):
+        self.section.color[index] = round(value)
 
 BOARD_RECT = pg.Rect(0,0,0,0)
 BOARD_RECT.size = (700,700)
 BOARD_RECT.center = spr.SCREEN_SIZE/2
 
-BOARD_SCALE = 10
-START_SCORE = 100                                       #플레이어의 시작 돈 
-START_ENV = 0                                           #보드 한 칸의 시작 환경 점수
-nature = [[0]*BOARD_SCALE]*BOARD_SCALE                  #각 플레이어들의 거주지의 환경 점수 - 삭제 예정
+MAINTAIN_LEVEL_SCO = 80
+MAINTAIN_LEVEL_ENV = 1
 
-STRATEGIES = [strategy1,strategy2,strategy3,strategy4]  #각 전략들의 함수를 이 list 자료에 저장하기
-STRATEGY_NUM = [25,25,25,25]                            #각 전략을 가진 플레이어들의 수를 저장
-board = []
+BOARD_SCALE = 20
+START_SCORE = 100
+START_ENV = -1
+
+RESTORE_SCORE = 0.5
+RESTORE_EFFICIENCY = 1.4
+DESTROY_SCORE = 0.5
+DESTROY_EFFICIENCY = 1.1
+
+DESTROY_SPREAD = 8
+RESTORE_SPREAD = 8
+
+ENV_IMPACT = 0.3
+ENV_RESILIENCE = 0.03
+
+STRATEGIES = [always_recover,always_destroy,maintain_score,maintain_env,alter_action]
+STRATEGY_NUM = [0,120,140,140,0]
 
 ################################################################  sprite definition  ################################################################
 
@@ -42,14 +79,14 @@ class Player():
     #    1.현재 보드에 있는 다른 플레이어들의 행동을 파악하며 다음 턴을 정하는 함수 - choose_turn(self)
     #    2.위의 함수의 결과를 기반으로 다음 행동을 실행하는 함수 - make_turn(self)
     #    3.점수가 하위권일 시 탈락하면 속성들을 리셋하고 전략을 바꾼 뒤 속성들을 초기화하는 함수 - reset(self)
-    #    4.spr_group의 스프라이트들의 내용을 재로딩하는 함수 - render_sprites(self)
-    #    5.spr_group의 스프라이트들을 출력하는 함수 - draw(self)
+    #    4.spr_group의 스프라이트들을 출력하는 함수 - draw(self)
     def __init__(self ,coordinate:tuple ,strategy ,parent_board):
         self.score = START_SCORE
         self.environment = START_ENV
         self.coordinate:tuple = coordinate
         self.strategy = strategy
         self.parent_board = parent_board
+        self.turn = False
 
     def load_sprites(self):
         #스프라이트 그룹과 관련된 내용 삽입 예정
@@ -60,23 +97,39 @@ class Player():
         section_pos  = np.array([[section_size[0],0],[0,section_size[1]]]) @ self.coordinate + np.array(self.parent_board.rect.topleft)
         self.section = spr.Rectangle(section_size,topleft=section_pos)
         self.spr_group.add(self.section)
+
+        #스프라이트 2. 자신의 전략을 나타냄
+        strategy_name_center = self.section.rect.center
+        if self.strategy == always_recover: self.strategy_name = spr.TextBox("R",center = strategy_name_center,anchor = spr.CENTER)
+        elif self.strategy == always_destroy: self.strategy_name = spr.TextBox("D",center = strategy_name_center,anchor = spr.CENTER)
+        elif self.strategy == maintain_score: self.strategy_name = spr.TextBox("MS",center = strategy_name_center,anchor = spr.CENTER)
+        elif self.strategy == maintain_env: self.strategy_name = spr.TextBox("ME",center = strategy_name_center,anchor = spr.CENTER)
+        elif self.strategy == alter_action: self.strategy_name = spr.TextBox("rand",center = strategy_name_center,anchor = spr.CENTER)
+        self.spr_group.add(self.strategy_name)
     
     def choose_turn(self):
-        self.turn = self.strategy()
+        self.strategy(self)
+        
 
     def make_turn(self):
-        if self.turn == True:                     #True는 환경 회복, False는 환경 파괴
-            pass                    
+        if self.turn == True:        #True는 환경 회복, False는 환경 파괴
+            for line in self.parent_board.players:
+                for player in line:
+                    distance = get_dist(player.coordinate,self.coordinate)
+                    player.environment += RESTORE_SCORE / RESTORE_SPREAD * exp(-((distance/RESTORE_SPREAD)**2))
+                    self.score -= RESTORE_SCORE / RESTORE_SPREAD * exp(-((distance/RESTORE_SPREAD)**2)) / RESTORE_EFFICIENCY
+                    
         else:
-            pass
-
+            for line in self.parent_board.players:
+                for player in line:
+                    distance = get_dist(player.coordinate,self.coordinate)
+                    player.environment -= DESTROY_SCORE / DESTROY_SPREAD * exp(-((distance/DESTROY_SPREAD)**2))
+                    self.score += DESTROY_SCORE / DESTROY_SPREAD * exp(-((distance/DESTROY_SPREAD)**2)) * DESTROY_EFFICIENCY
+ 
     def reset(self ,new_strategy):
         self.score = START_SCORE
         self.environment = START_ENV
         self.strategy = new_strategy
-
-    def render_sprites():
-        pass
 
     def draw(self):
         pass
@@ -135,7 +188,7 @@ clock = pg.time.Clock()
 running = True
 while running:
 
-    tick = clock.tick(60)
+    tick = clock.tick(5)
 
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -143,7 +196,18 @@ while running:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False
-    """여기에 메인 코드가 들어감"""
+
+    for line in board.players:
+        for player in line:
+            score_to_color(player)
+            player.choose_turn()
+    for line in board.players:
+        for player in line:
+            player.make_turn()
+    for line in board.players:
+        for player in line:
+            player.score += ENV_IMPACT * player.environment
+            player.environment += ENV_RESILIENCE * tanh((player.environment - START_ENV) / 2)
     spr.screen.fill(spr.BG_COLOR)
     for everything in drawables_list:
         everything.update()

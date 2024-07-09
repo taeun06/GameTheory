@@ -4,11 +4,8 @@
 1. 소문자만 사용햐여 표현
 2. 띄어쓰기 시 언더바 사용
 3. 하나의 단어만 있는 경우는 줄이기 불가
-4. 다음의 단어만 줄일 수 있음
-    * sprite -> spr
-    * image -> img
-    * environment -> env
-    * position -> pos&nbsp;&nbsp;(예외 - 혼자 있어도 줄이기 가능)
+4. 줄이는 단어는 5글자 이상이어야 하며, 통상적으로 쓰이지 않는 줄이기는 사용하지 않는다
+5. 예외적으로 position은 pos로 줄일 수 있다
 
 ex)
 ```python
@@ -45,11 +42,7 @@ class ThisIsClass():
 1. 대문자만 사용하여 표현
 2. 띄어쓰기 시 언더바 사용
 3. 하나의 단어만 있는 경우는 줄이기 불가
-4. 다음의 단어만 줄일 수 있음
-    * SPRITE -> SPR
-    * IMAGE -> IMG
-    * ENVIRONMENT -> ENV
-    * POSITION -> POS
+4. 줄이는 단어는 5글자 이상이어야 하며, 통상적으로 쓰이지 않는 줄이기는 사용하지 않는다
 
 ex)
 ```python
