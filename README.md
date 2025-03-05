@@ -1,2 +1,3 @@
 # GameTheory
-python code for 하랑 project (school activity)
+학교 활동용으로 잠깐 만들었던 프로그램이나 만들고 보니 기획 단계에서의 문제를 느낌
+별로 큰 의미를 가져다주는 프로그램이 아니라고 생각하고, 그런 만큼 별거 없음
